@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Productivity Tracker</title>
+    <style>
+        /* Existing styles remain the same */
+        /* Adding a few additional styles for expense section */
+        .expense-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .expense-card {
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .total-expense {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-top: 10px;
+        }
+
+        .dark-mode .expense-card {
+            background-color: var(--dark-bg-secondary);
+            color: var(--dark-text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Existing header and navigation remain the same -->
+        <nav class="nav-buttons">
+            <button class="nav-btn active" data-section="tasks">Tasks</button>
+            <button class="nav-btn" data-section="goals">Goals</button>
+            <button class="nav-btn" data-section="events">Events</button>
+            <button class="nav-btn" data-section="expenses">Expenses</button>
+        </nav>
+
+        <!-- Existing sections remain the same -->
+        <!-- Add new Expenses Section -->
+        <section id="expenses-section" class="section">
+            <div class="form-container">
+                <h2>Add New Expense</h2>
+                <div class="input-group">
+                    <input type="text" id="expense-title" placeholder="Expense Title">
+                    <input type="number" id="expense-amount" placeholder="Amount">
+                    <select id="expense-category">
+                        <option value="food">Food</option>
+                        <option value="transport">Transport</option>
+                        <option value="utilities">Utilities</option>
+                        <option value="entertainment">Entertainment</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <input type="date" id="expense-date">
+                    <button id="add-expense" class="btn btn-primary">Add Expense</button>
+                </div>
+            </div>
+
+            <div class="expense-breakdown">
+                <div class="expense-card">
+                    <h3>Daily Expenses</h3>
+                    <div id="daily-expenses-list"></div>
+                    <div id="daily-total" class="total-expense">Total: $0</div>
+                </div>
+                <div class="expense-card">
+                    <h3>Weekly Expenses</h3>
+                    <div id="weekly-expenses-list"></div>
+                    <div id="weekly-total" class="total-expense">Total: $0</div>
+                </div>
+                <div class="expense-card">
+                    <h3>Monthly Expenses</h3>
+                    <div id="monthly-expenses-container"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Add to existing ProductivityTracker class or modify the constructor
+        class ProductivityTracker {
+            constructor() {
+                // Existing properties
+                this.expenses = [];
+
+                // Existing initialization code
+                this.initEventListeners();
+                this.loadFromLocalStorage();
+            }
+
+            // Add to existing initEventListeners method
+            initEventListeners() {
+                // Existing event listeners
+                // Add expense event listener
+                document.getElementById('add-expense').addEventListener('click', this.addExpense.bind(this));
+            }
+
+            addExpense() {
+                const titleInput = document.getElementById('expense-title');
+                const amountInput = document.getElementById('expense-amount');
+                const categoryInput = document.getElementById('expense-category');
+                const dateInput = document.getElementById('expense-date');
+
+                if (!titleInput.value.trim() || !amountInput.value) {
+                    alert('Please enter expense title and amount');
+                    return;
+                }
+
+                const expense = {
+                    id: Date.now(),
+                    title: titleInput.value,
+                    amount: parseFloat(amountInput.value),
+                    category: categoryInput.value,
+                    date: dateInput.value || new Date().toISOString().split('T')[0]
+                };
+
+                this.expenses.push(expense);
+                this.renderExpenses();
+                this.saveToLocalStorage();
+
+                // Reset inputs
+                titleInput.value = '';
+                amountInput.value = '';
+                categoryInput.value = 'other';
+                dateInput.value = '';
+            }
+
+            renderExpenses() {
+                const today = new Date();
+                const oneWeekAgo = new Date(today);
+                oneWeekAgo.setDate(today.getDate() - 7);
+
+                // Filter and calculate daily expenses
+                const dailyExpenses = this.expenses.filter(exp => {
+                    const expDate = new Date(exp.date);
+                    return expDate.toDateString() === today.toDateString();
+                });
+                const dailyTotal = dailyExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+                
+                // Render daily expenses
+                const dailyList = document.getElementById('daily-expenses-list');
+                const dailyTotalEl = document.getElementById('daily-total');
+                dailyList.innerHTML = '';
+                dailyExpenses.forEach(exp => {
+                    const expEl = document.createElement('div');
+                    expEl.innerHTML = `${exp.title}: $${exp.amount.toFixed(2)} (${exp.category})`;
+                    dailyList.appendChild(expEl);
+                });
+                dailyTotalEl.textContent = `Total: $${dailyTotal.toFixed(2)}`;
+
+                // Filter and calculate weekly expenses
+                const weeklyExpenses = this.expenses.filter(exp => {
+                    const expDate = new Date(exp.date);
+                    return expDate >= oneWeekAgo && expDate <= today;
+                });
+                const weeklyTotal = weeklyExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+
+                // Render weekly expenses
+                const weeklyList = document.getElementById('weekly-expenses-list');
+                const weeklyTotalEl = document.getElementById('weekly-total');
+                weeklyList.innerHTML = '';
+                weeklyExpenses.forEach(exp => {
+                    const expEl = document.createElement('div');
+                    expEl.innerHTML = `${exp.title}: $${exp.amount.toFixed(2)} (${exp.category})`;
+                    weeklyList.appendChild(expEl);
+                });
+                weeklyTotalEl.textContent = `Total: $${weeklyTotal.toFixed(2)}`;
+
+                // Monthly expenses by month
+                const monthlyExpensesContainer = document.getElementById('monthly-expenses-container');
+                monthlyExpensesContainer.innerHTML = '';
+
+                // Create an object to store monthly totals
+                const monthlyTotals = {};
+                const monthNames = [
+                    'January', 'February', 'March', 'April', 'May', 'June', 
+                    'July', 'August', 'September', 'October', 'November', 'December'
+                ];
+
+                // Group expenses by month
+                this.expenses.forEach(exp => {
+                    const expDate = new Date(exp.date);
+                    const monthKey = `${expDate.getFullYear()}-${expDate.getMonth()}`;
+                    
+                    if (!monthlyTotals[monthKey]) {
+                        monthlyTotals[monthKey] = {
+                            total: 0,
+                            expenses: []
+                        };
+                    }
+                    
+                    monthlyTotals[monthKey].total += exp.amount;
+                    monthlyTotals[monthKey].expenses.push(exp);
+                });
+
+                // Render monthly expenses
+                Object.keys(monthlyTotals).sort().forEach(monthKey => {
+                    const [year, month] = monthKey.split('-');
+                    const monthName = monthNames[parseInt(month)];
+                    
+                    const monthEl = document.createElement('div');
+                    monthEl.innerHTML = `
+                        <strong>${monthName} ${year}</strong>
+                        <p>Total: $${monthlyTotals[monthKey].total.toFixed(2)}</p>
+                    `;
+                    
+                    monthlyExpensesContainer.appendChild(monthEl);
+                });
+            }
+
+            // Modify existing saveToLocalStorage method
+            saveToLocalStorage() {
+                // Existing save methods
+                localStorage.setItem('expenses', JSON.stringify(this.expenses));
+            }
+
+            // Modify existing loadFromLocalStorage method
+            loadFromLocalStorage() {
+                // Existing load methods
+                const savedExpenses = localStorage.getItem('expenses');
+                if (savedExpenses) this.expenses = JSON.parse(savedExpenses);
+
+                // Initial render
+                this.renderExpenses();
+            }
+
+            // Add method to delete expense if needed
+            deleteExpense(id) {
+                this.expenses = this.expenses.filter(exp => exp.id !== id);
+                this.renderExpenses();
+                this.saveToLocalStorage();
+            }
+        }
+
+        // Initialize the Productivity Tracker
+        const productivityTracker = new ProductivityTracker();
+    </script>
+</body>
+</html>

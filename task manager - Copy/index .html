@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Productivity Tracker</title>
+    <style>
+        :root {
+            --bg-primary: #f4f4f4;
+            --bg-secondary: #ffffff;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --primary-color: #4a90e2;
+            --accent-color: #2ecc71;
+            --danger-color: #e74c3c;
+
+            /* Dark Mode Variables */
+            --dark-bg-primary: #121212;
+            --dark-bg-secondary: #1e1e1e;
+            --dark-text-primary: #ffffff;
+            --dark-text-secondary: #b0b0b0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        body.dark-mode {
+            background-color: var(--dark-bg-primary);
+            color: var(--dark-text-primary);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            padding: 10px 15px;
+            border: none;
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .nav-btn.active {
+            background-color: var(--accent-color);
+        }
+
+        .mode-toggle {
+            background: none;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .section {
+            display: none;
+            background-color: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .form-container {
+            display: grid;
+            gap: 15px;
+        }
+
+        .input-group {
+            display: grid;
+            gap: 10px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: var(--text-secondary);
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .list-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .list-card {
+            background-color: var(--bg-primary);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .list-item.completed {
+            opacity: 0.6;
+            text-decoration: line-through;
+        }
+
+        .dark-mode .list-card {
+            background-color: var(--dark-bg-secondary);
+            color: var(--dark-text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Productivity Tracker</h1>
+            <button id="mode-toggle" class="mode-toggle">🌓 Toggle Mode</button>
+        </header>
+
+        <nav class="nav-buttons">
+            <button class="nav-btn active" data-section="tasks">Tasks</button>
+            <button class="nav-btn" data-section="goals">Goals</button>
+            <button class="nav-btn" data-section="events">Events</button>
+        </nav>
+
+        <!-- Tasks Section -->
+        <section id="tasks-section" class="section active">
+            <div class="form-container">
+                <h2>Add New Task</h2>
+                <div class="input-group">
+                    <input type="text" id="task-title" placeholder="Task Title">
+                    <textarea id="task-description" placeholder="Task Description"></textarea>
+                    <input type="date" id="task-deadline">
+                    <select id="task-priority">
+                        <option value="low">Low Priority</option>
+                        <option value="medium" selected>Medium Priority</option>
+                        <option value="high">High Priority</option>
+                    </select>
+                    <div class="btn-group">
+                        <button id="add-hourly-task" class="btn btn-primary">Hourly Task</button>
+                        <button id="add-weekly-task" class="btn btn-primary">Weekly Task</button>
+                        <button id="add-monthly-task" class="btn btn-primary">Monthly Task</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="list-container" id="tasks-list">
+                <div class="list-card">
+                    <h3>Hourly Tasks</h3>
+                    <div id="hourly-tasks-list"></div>
+                </div>
+                <div class="list-card">
+                    <h3>Weekly Tasks</h3>
+                    <div id="weekly-tasks-list"></div>
+                </div>
+                <div class="list-card">
+                    <h3>Monthly Tasks</h3>
+                    <div id="monthly-tasks-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Goals Section -->
+        <section id="goals-section" class="section">
+            <div class="form-container">
+                <h2>Set New Goal</h2>
+                <div class="input-group">
+                    <input type="text" id="goal-title" placeholder="Goal Title">
+                    <textarea id="goal-description" placeholder="Goal Description"></textarea>
+                    <input type="date" id="goal-deadline">
+                    <div class="btn-group">
+                        <button id="add-yearly-goal" class="btn btn-primary">Yearly Goal</button>
+                        <button id="add-quarterly-goal" class="btn btn-primary">Quarterly Goal</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="list-container" id="goals-list">
+                <div class="list-card">
+                    <h3>Yearly Goals</h3>
+                    <div id="yearly-goals-list"></div>
+                </div>
+                <div class="list-card">
+                    <h3>Quarterly Goals</h3>
+                    <div id="quarterly-goals-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Events Section -->
+        <section id="events-section" class="section">
+            <div class="form-container">
+                <h2>Schedule New Event</h2>
+                <div class="input-group">
+                    <input type="text" id="event-title" placeholder="Event Title">
+                    <textarea id="event-description" placeholder="Event Description"></textarea>
+                    <input type="datetime-local" id="event-datetime">
+                    <button id="add-event" class="btn btn-primary">Add Event</button>
+                </div>
+            </div>
+
+            <div class="list-container" id="events-list">
+                <div class="list-card">
+                    <h3>Scheduled Events</h3>
+                    <div id="events-container"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Productivity Tracker Main Logic
+        class ProductivityTracker {
+            constructor() {
+                this.tasks = {
+                    hourly: [],
+                    weekly: [],
+                    monthly: []
+                };
+                this.goals = {
+                    yearly: [],
+                    quarterly: []
+                };
+                this.events = [];
+
+                this.initEventListeners();
+                this.loadFromLocalStorage();
+            }
+
+            initEventListeners() {
+                // Navigation Buttons
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    btn.addEventListener('click', this.handleNavigation.bind(this));
+                });
+
+                // Mode Toggle
+                document.getElementById('mode-toggle').addEventListener('click', this.toggleDarkMode.bind(this));
+
+                // Tasks
+                document.getElementById('add-hourly-task').addEventListener('click', () => this.addTask('hourly'));
+                document.getElementById('add-weekly-task').addEventListener('click', () => this.addTask('weekly'));
+                document.getElementById('add-monthly-task').addEventListener('click', () => this.addTask('monthly'));
+
+                // Goals
+                document.getElementById('add-yearly-goal').addEventListener('click', () => this.addGoal('yearly'));
+                document.getElementById('add-quarterly-goal').addEventListener('click', () => this.addGoal('quarterly'));
+
+                // Events
+                document.getElementById('add-event').addEventListener('click', this.addEvent.bind(this));
+            }
+
+            handleNavigation(e) {
+                // Remove active class from all buttons and sections
+                document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+
+                // Add active class to clicked button and corresponding section
+                e.target.classList.add('active');
+                document.getElementById(`${e.target.dataset.section}-section`).classList.add('active');
+            }
+
+            toggleDarkMode() {
+                document.body.classList.toggle('dark-mode');
+                localStorage.setItem('dark-mode', document.body.classList.contains('dark-mode'));
+            }
+
+            addTask(type) {
+                const titleInput = document.getElementById('task-title');
+                const descriptionInput = document.getElementById('task-description');
+                const deadlineInput = document.getElementById('task-deadline');
+                const priorityInput = document.getElementById('task-priority');
+
+                if (!titleInput.value.trim()) {
+                    alert('Please enter a task title');
+                    return;
+                }
+
+                const task = {
+                    id: Date.now(),
+                    title: titleInput.value,
+                    description: descriptionInput.value,
+                    deadline: deadlineInput.value,
+                    priority: priorityInput.value,
+                    completed: false
+                };
+
+                this.tasks[type].push(task);
+                this.renderTasks();
+                this.saveToLocalStorage();
+
+                // Reset inputs
+                titleInput.value = '';
+                descriptionInput.value = '';
+                deadlineInput.value = '';
+                priorityInput.value = 'medium';
+            }
+
+            addGoal(type) {
+                const titleInput = document.getElementById('goal-title');
+                const descriptionInput = document.getElementById('goal-description');
+                const deadlineInput = document.getElementById('goal-deadline');
+
+                if (!titleInput.value.trim()) {
+                    alert('Please enter a goal title');
+                    return;
+                }
+
+                const goal = {
+                    id: Date.now(),
+                    title: titleInput.value,
+                    description: descriptionInput.value,
+                    deadline: deadlineInput.value,
+                    completed: false
+                };
+
+                this.goals[type].push(goal);
+                this.renderGoals();
+                this.saveToLocalStorage();
+
+                // Reset inputs
+                titleInput.value = '';
+                descriptionInput.value = '';
+                deadlineInput.value = '';
+            }
+
+            addEvent() {
+                const titleInput = document.getElementById('event-title');
+                const descriptionInput = document.getElementById('event-description');
+                const datetimeInput = document.getElementById('event-datetime');
+
+                if (!titleInput.value.trim()) {
+                    alert('Please enter an event title');
+                    return;
+                }
+
+                const event = {
+                    id: Date.now(),
+                    title: titleInput.value,
+                    description: descriptionInput.value,
+                    datetime: datetimeInput.value
+                };
+
+                this.events.push(event);
+                this.renderEvents();
+                this.saveToLocalStorage();
+
+                // Reset inputs
+                titleInput.value = '';
+                descriptionInput.value = '';
+                datetimeInput.value = '';
+            }
+
+            renderTasks() {
+                Object.keys(this.tasks).forEach(type => {
+                    const listContainer = document.getElementById(`${type}-tasks-list`);
+                    listContainer.innerHTML = '';
+
+                    this.tasks[type].forEach(task => {
+                        const taskElement = document.createElement('div');
+                        taskElement.classList.add('list-item');
+                        if (task.completed) taskElement.classList.add('completed');
+
+                        taskElement.innerHTML = `
+                            <div>
+                                <strong>${task.title}</strong>
+                                <p>${task.description}</p>
+                                <small>Deadline: ${task.deadline || 'No deadline'}</small>
+                            </div>
+                            <div>
+                                <button class="btn btn-secondary" onclick="productivityTracker.toggleTaskCompletion(${task.id}, '${type}')">✓</button>
+                                <button class="btn btn-danger" onclick="productivityTracker.deleteTask(${task.id}, '${type}')">✗</button>
+                            </div>
+                        `;
+
+                        listContainer.appendChild(taskElement);
+                    });
+                });
+            }
+
+            renderGoals() {
+                Object.keys(this.goals).forEach(type => {
+                    const listContainer = document.getElementById(`${type}-goals-list`);
+                    listContainer.innerHTML = '';
+
+                    this.goals[type].forEach(goal => {
+                        const goalElement = document.createElement('div');
+                        goalElement.classList.add('list-item');
+                        if (goal.completed) goalElement.classList.add('completed');
+
+                        goalElement.innerHTML = `
+                            <div>
+                                <strong>${goal.title}</strong>
+                                <p>${goal.description}</p>
+                                <small>Deadline: ${goal.deadline || 'No deadline'}</small>
+                            </div>
+                            <div>
+                                <button class="btn btn-secondary" onclick="productivityTracker.toggleGoalCompletion(${goal.id}, '${type}')">✓</button>
+                                <button class="btn btn-danger" onclick="productivityTracker.deleteGoal(${goal.id}, '${type}')">✗</button>
+                            </div>
+                        `;
+
+                        listContainer.appendChild(goalElement);
+                    });
+                });
+            }
+
+            renderEvents() {
+                const eventsContainer = document.getElementById('events-container');
+                eventsContainer.innerHTML = '';
+
+                this.events.forEach(event => {
+                    const eventElement = document.createElement('div');
+                    eventElement.classList.add('list-item');
+
+                    eventElement.innerHTML = `
+                        <div>
+                            <strong>${event.title}</strong>
+                            <p>${event.description}</p>
+                            <small>Date: ${new Date(event.datetime).toLocaleString()}</small>
+                        </div>
+                        <button class="btn btn-danger" onclick="productivityTracker.deleteEvent(${event.id})">✗</button>
+                    `;
+
+                    eventsContainer.appendChild(eventElement);
+                });
+            }
+
+            toggleTaskCompletion(id, type) {
+                const task = this.tasks[type].find(t => t.id === id);
+                if (task) {
+                    task.completed = !task.completed;
+                    this.renderTasks();
+                    this.saveToLocalStorage();
+                }
+            }
+
+            toggleGoalCompletion(id, type) {
+                const goal = this.goals[type].find(g => g.id === id);
+                if (goal) {
+                    goal.completed = !goal.completed;
+                    this.renderGoals();
+                    this.saveToLocalStorage();
+                }
+            }
+
+            deleteTask(id, type) {
+                this.tasks[type] = this.tasks[type].filter(task => task.id !== id);
+                this.renderTasks();
+                this.saveToLocalStorage();
+            }
+
+            deleteGoal(id, type) {
+                this.goals[type] = this.goals[type].filter(goal => goal.id !== id);
+                this.renderGoals();
+                this.saveToLocalStorage();
+            }
+
+            deleteEvent(id) {
+                this.events = this.events.filter(event => event.id !== id);
+                this.renderEvents();
+                this.saveToLocalStorage();
+            }
+
+            saveToLocalStorage() {
+                localStorage.setItem('tasks', JSON.stringify(this.tasks));
+                localStorage.setItem('goals', JSON.stringify(this.goals));
+                localStorage.setItem('events', JSON.stringify(this.events));
+            }
+
+            loadFromLocalStorage() {
+                const savedTasks = localStorage.getItem('tasks');
+                const savedGoals = localStorage.getItem('goals');
+                const savedEvents = localStorage.getItem('events');
+
+                if (savedTasks) this.tasks = JSON.parse(savedTasks);
+                if (savedGoals) this.goals = JSON.parse(savedGoals);
+                if (savedEvents) this.events = JSON.parse(savedEvents);
+
+                // Check dark mode preference
+                const isDarkMode = localStorage.getItem('dark-mode') === 'true';
+                if (isDarkMode) {
+                    document.body.classList.add('dark-mode');
+                }
+
+                // Initial render
+                this.renderTasks();
+                this.renderGoals();
+                this.renderEvents();
+            }
+        }
+
+        // Initialize the Productivity Tracker
+        const productivityTracker = new ProductivityTracker();
+    </script>
+</body>
+</html>
